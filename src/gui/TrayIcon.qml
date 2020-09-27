@@ -49,6 +49,9 @@ Item {
         showHidden: true
         nameFilters: [".show"]
 
+        Component.onCompleted: print(folder)
+        onFolderChanged: print(folder)
+
         onCountChanged: {
             if (count) {
                 window.restoreFromTray()
