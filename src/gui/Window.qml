@@ -118,8 +118,8 @@ ApplicationWindow {
         Behavior on scale { HNumberAnimation { overshoot: 3; factor: 1.2 } }
     }
 
+    onSettingsFolderChanged: print(`Should be settings dir: ${settingsFolder}`)
     TrayIcon {
         window: window
-        settingsFolder: window.settingsFolder
     }
 }

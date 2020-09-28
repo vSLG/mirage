@@ -8,7 +8,6 @@ import Qt.labs.folderlistmodel 2.12
 
 Item {
     property ApplicationWindow window
-    property alias settingsFolder: showUpWatcher.folder
 
     SystemTrayIcon {
         property string iconPack: theme ? theme.icons.preferredPack : "thin"
@@ -48,9 +47,10 @@ Item {
         showDirs: false
         showHidden: true
         nameFilters: [".show"]
+        folder: window.settingsFolder
 
-        Component.onCompleted: print(folder)
-        onFolderChanged: print(folder)
+        Component.onCompleted: print(`Should be current path: ${folder}`)
+        onFolderChanged: print(`Should be settings dir: ${folder}`)
 
         onCountChanged: {
             if (count) {
