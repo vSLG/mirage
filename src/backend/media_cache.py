@@ -11,7 +11,7 @@ import shutil
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Optional
+from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Optional, Union
 from urllib.parse import urlparse
 
 import nio
@@ -53,12 +53,13 @@ class MediaCache:
         mxc:            str,
         title:          str,
         crypt_dict:     CryptDict = None,
-    ) -> Path:
+        as_path:        bool      = False,
+    ) -> Union[Path, str]:
         """Return `Media.get()`'s result. Intended for QML."""
 
-        return (
-            await Media(self, client_user_id,  mxc, title, crypt_dict).get()
-        ).as_uri()
+        media = Media(self, client_user_id,  mxc, title, crypt_dict)
+        media_path = await media.get()
+        return media_path if as_path else media_path.as_uri()
 
 
     async def get_thumbnail(
@@ -69,14 +70,16 @@ class MediaCache:
         width:          int,
         height:         int,
         crypt_dict:     CryptDict = None,
-    ) -> Path:
+        as_path:        bool      = False,
+    ) -> Union[Path, str]:
         """Return `Thumbnail.get()`'s result. Intended for QML."""
 
         # QML sometimes pass float sizes, which matrix API doesn't like.
         size = (round(width), round(height))
 
         thumb = Thumbnail(self, client_user_id, mxc, title, crypt_dict, size)
-        return (await thumb.get()).as_uri()
+        thumb_path = await thumb.get()
+        return thumb_path if as_path else thumb_path.as_uri()
 
 
 @dataclass

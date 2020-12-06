@@ -2077,6 +2077,7 @@ class MatrixClient(nio.AsyncClient):
             title          = filename,
             width          = avatar_size[0],
             height         = avatar_size[1],
+            as_path        = True,
         )
 
         image_data = None
@@ -2140,7 +2141,6 @@ class MatrixClient(nio.AsyncClient):
         **fields,
     ) -> Event:
         """Register/update a `nio.Event` as a `models.items.Event` object."""
-
         await self.register_nio_room(room)
 
         sender_name, sender_avatar, must_fetch_sender = \
@@ -2265,9 +2265,9 @@ class MatrixClient(nio.AsyncClient):
                 body = body.replace(" ⏎ ", "<br>")
                            .replace(" ⏎⏎ ", f"<br>{'─' * 24}<br>"),
 
-                image = await self.get_notification_avatar(
+                image = str(await self.get_notification_avatar(
                     mxc=item.sender_avatar, user_id=item.sender_id,
-                ) if item.sender_avatar else "",
+                )) if item.sender_avatar else "",
             )
 
         await self.update_account_unread_counts()
