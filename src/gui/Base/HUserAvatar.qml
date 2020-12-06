@@ -17,7 +17,7 @@ HAvatar {
     readonly property bool moderator: powerLevel >= 50 && ! admin
 
     name: displayName || userId.substring(1)  // no leading @
-    title: "user_" + userId + ".avatar"
+    title: "user_" + userId.replace(":", "@") + ".avatar"
 
     HLoader {
         active: admin || moderator || invited

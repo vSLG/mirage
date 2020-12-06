@@ -14,7 +14,7 @@ defineReplace(glob_filenames) {
 # widgets: Make native file dialogs available to QML (must use QApplication)
 QT        = quick quickcontrols2 widgets
 DEFINES  += QT_DEPRECATED_WARNINGS
-CONFIG   += warn_off c++11 release
+CONFIG   += warn_off c++11 release console
 TEMPLATE  = app
 
 BUILD_DIR   = build
@@ -93,7 +93,9 @@ QMAKE_EXTRA_TARGETS += test
 
 # Allow cleaning folders instead of just files
 win32:QMAKE_DEL_FILE = rmdir /q /s
-!win32:QMAKE_DEL_FILE = rm -rf
+!win32 | win32-g++ { # win32-g++ usually is mingw
+    QMAKE_DEL_FILE = rm -rf
+}
 
 for(file, $$list($$glob_filenames(*.py))) {
     PYCACHE_DIRS *= $$dirname(file)/__pycache__

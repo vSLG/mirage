@@ -52,7 +52,7 @@ SystemTrayIcon {
 
         MenuItem {
             text: qsTr("Quit %1").arg(Qt.application.displayName)
-            onTriggered: Qt.quit()
+            onTriggered: window.close()
         }
     }
 }

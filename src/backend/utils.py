@@ -320,6 +320,7 @@ async def atomic_write(
     can_replace = False
 
     def done() -> None:
+        temp.close()
         nonlocal can_replace
         can_replace = True
 
@@ -333,7 +334,7 @@ async def atomic_write(
             temp_path.unlink()
 
 
-def _compress(image: BytesOrPIL, fmt: str, optimize: bool) -> bytes:
+async def _compress(image: BytesOrPIL, fmt: str, optimize: bool) -> bytes:
     if isinstance(image, bytes):
         pil_image = PILImage.open(io.BytesIO(image))
     else:
@@ -349,6 +350,6 @@ async def compress_image(
 ) -> bytes:
     """Compress image in a separate process, without blocking event loop."""
 
-    return await asyncio.get_event_loop().run_in_executor(
-        COMPRESSION_POOL, _compress, image, fmt, optimize,
+    return await asyncio.get_event_loop().create_task(
+        _compress(image, fmt, optimize),
     )

@@ -192,13 +192,13 @@ class NioCallbacks:
         thumb_crypt_dict = info.get("thumbnail_file", {})
 
         try:
-            media_local_path: Union[Path, str] = await Media(
+            media_local_path: Union[Path, str] = (await Media(
                 cache          = self.client.backend.media_cache,
                 client_user_id = self.user_id,
                 mxc            = ev.url,
                 title          = ev.body,
                 crypt_dict     = media_crypt_dict,
-            ).get_local()
+            ).get_local()).as_uri()
         except FileNotFoundError:
             media_local_path = ""
 

@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 import asyncio
+import certifi
 import logging as log
 import os
 import re
+import ssl
 import sys
 import time
 from datetime import datetime
@@ -332,7 +334,6 @@ class Backend:
 
     async def terminate_clients(self) -> None:
         """Call every `MatrixClient`'s `terminate()` method."""
-
         log.info("Setting clients offline...")
         tasks = [client.terminate() for client in self.clients.values()]
         await asyncio.gather(*tasks)
@@ -418,14 +419,14 @@ class Backend:
 
     # General functions
 
-    async def get_config_dir(self) -> Path:
-        return Path(self.appdirs.user_config_dir)
+    async def get_config_dir(self) -> str:
+        return Path(self.appdirs.user_config_dir).as_uri()
 
 
-    async def get_theme_dir(self) -> Path:
+    async def get_theme_dir(self) -> str:
         path = Path(self.appdirs.user_data_dir) / "themes"
         path.mkdir(parents=True, exist_ok=True)
-        return path
+        return path.as_uri()
 
 
     async def get_settings(self) -> Tuple[dict, UIState, History, str, dict]:
@@ -471,14 +472,18 @@ class Backend:
     ) -> None:
         """Ping a homeserver present in our model and set its `ping` field."""
 
-        item  = self.models["homeservers"][homeserver_url]
-        times = []
+        item    = self.models["homeservers"][homeserver_url]
+        times   = []
+        ssl_ctx = ssl.create_default_context(cafile=certifi.where())
 
         for i in range(16):
             start = time.time()
 
             try:
-                await session.get(f"{homeserver_url}/_matrix/client/versions")
+                await session.get(
+                    f"{homeserver_url}/_matrix/client/versions",
+                    ssl=ssl_ctx,
+                )
             except aiohttp.ClientError as err:
                 log.warning("Failed pinging %s: %r", homeserver_url, err)
                 item.status = PingStatus.Failed
@@ -518,7 +523,8 @@ class Backend:
         api_list = "https://publiclist.anchel.nl/publiclist.json"
         tmout    = aiohttp.ClientTimeout(total=20)
         session  = aiohttp.ClientSession(raise_for_status=True, timeout=tmout)
-        response = await session.get(api_list)
+        ssl_ctx  = ssl.create_default_context(cafile=certifi.where())
+        response = await session.get(api_list, ssl=ssl_ctx)
         coros    = []
 
         for server in (await response.json()):

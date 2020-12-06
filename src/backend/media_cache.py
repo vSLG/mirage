@@ -56,7 +56,9 @@ class MediaCache:
     ) -> Path:
         """Return `Media.get()`'s result. Intended for QML."""
 
-        return await Media(self, client_user_id,  mxc, title, crypt_dict).get()
+        return (
+            await Media(self, client_user_id,  mxc, title, crypt_dict).get()
+        ).as_uri()
 
 
     async def get_thumbnail(
@@ -74,7 +76,7 @@ class MediaCache:
         size = (round(width), round(height))
 
         thumb = Thumbnail(self, client_user_id, mxc, title, crypt_dict, size)
-        return await thumb.get()
+        return (await thumb.get()).as_uri()
 
 
 @dataclass

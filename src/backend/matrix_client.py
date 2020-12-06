@@ -4,11 +4,13 @@
 """Matrix client to interact with a homeserver and other related classes."""
 
 import asyncio
+import certifi
 import html
 import io
 import logging as log
 import platform
 import re
+import ssl
 import sys
 import textwrap
 import traceback
@@ -23,6 +25,7 @@ from typing import (
     NamedTuple, Optional, Set, Tuple, Type, Union,
 )
 from urllib.parse import urlparse
+from urllib.request import url2pathname
 from uuid import UUID, uuid4
 
 import cairosvg
@@ -180,6 +183,7 @@ class MatrixClient(nio.AsyncClient):
                 max_timeout_retry_wait_time = 10,
                 # TODO: pass a custom encryption DB pickle key?
             ),
+            ssl = ssl.create_default_context(cafile=certifi.where()),
         )
 
         self.backend: "Backend"  = backend
@@ -656,19 +660,21 @@ class MatrixClient(nio.AsyncClient):
         """Send a clipboard image passed from QML as a `m.image` message."""
 
         prefix = datetime.now().strftime("%Y%m%d-%H%M%S.")
+        temp   = NamedTemporaryFile(prefix=prefix, suffix=".png")
+        path   = temp.name
+        temp.close()
 
-        with NamedTemporaryFile(prefix=prefix, suffix=".png") as temp:
+        async def get_path() -> Path:
+            # optimize is too slow for large images
+            compressed = await utils.compress_image(image, optimize=False)
 
-            async def get_path() -> Path:
-                # optimize is too slow for large images
-                compressed = await utils.compress_image(image, optimize=False)
+            async with aiofiles.open(temp.name, "wb") as file:
+                await file.write(compressed)
 
-                async with utils.aiopen(temp.name, "wb") as file:
-                    await file.write(compressed)
+            return Path(temp.name)
 
-                return Path(temp.name)
-
-            await self.send_file(room_id, get_path, reply_to_event_id)
+        await self.send_file(room_id, get_path, reply_to_event_id)
+        Path(temp.name).unlink() # Delete the file after
 
 
     async def send_file(
@@ -713,9 +719,11 @@ class MatrixClient(nio.AsyncClient):
         upload_item = Upload(item_uuid)
         self.models[room_id, "uploads"][str(item_uuid)] = upload_item
 
-        transaction_id   = uuid4()
-        path             = Path(await path() if callable(path) else path)
-        encrypt          = room_id in self.encrypted_rooms
+        path = Path(
+            await path() if callable(path) else url2pathname(path)
+        )
+        transaction_id = uuid4()
+        encrypt        = room_id in self.encrypted_rooms
 
         thumb_crypt_dict: Dict[str, Any] = {}
         crypt_dict:       Dict[str, Any] = {}
@@ -2061,10 +2069,12 @@ class MatrixClient(nio.AsyncClient):
 
         avatar_size = (48, 48)
 
+        filename = f"user_{user_id.replace(':', '@')}.notification"
+
         avatar_path = await self.backend.media_cache.get_thumbnail(
             client_user_id = self.user_id,
             mxc            = mxc,
-            title          = f"user_{user_id}.notification",
+            title          = filename,
             width          = avatar_size[0],
             height         = avatar_size[1],
         )
@@ -2110,7 +2120,7 @@ class MatrixClient(nio.AsyncClient):
             cache          = self.backend.media_cache,
             client_user_id = self.user_id,
             mxc            = mxc,
-            filename       = f"user_{user_id}.notification",
+            filename       = filename,
             overwrite      = True,
             data           = out.getvalue(),
             wanted_size    = avatar_size,

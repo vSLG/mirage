@@ -11,5 +11,5 @@ HAvatar {
           displayName.substring(1) :
           displayName
 
-    title: "room_" + roomId + ".avatar"
+    title: "room_" + roomId.replace(":", "@") + ".avatar"
 }

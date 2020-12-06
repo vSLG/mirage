@@ -103,7 +103,9 @@ ApplicationWindow {
 
     onClosing: {
         close.accepted = ! settings.General.close_to_tray
-        settings.General.close_to_tray ? hide() : Qt.quit()
+        hide()
+        if (settings.General.close_to_tray)
+            py.callCoro("terminate_clients", [], Qt.quit, Qt.quit)
     }
 
     PythonRootBridge { id: py }

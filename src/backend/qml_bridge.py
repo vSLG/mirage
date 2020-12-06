@@ -17,6 +17,7 @@ class.
 import asyncio
 import logging as log
 import os
+import sys
 import traceback
 from concurrent.futures import Future
 from operator import attrgetter
@@ -42,6 +43,11 @@ class QMLBridge:
     """
 
     def __init__(self) -> None:
+        if sys.platform == "win32" and sys.version_info >= (3, 8, 0):
+            asyncio.set_event_loop_policy(
+                asyncio.WindowsSelectorEventLoopPolicy(),
+            )
+
         try:
             self._loop = asyncio.get_event_loop()
         except RuntimeError:
@@ -168,15 +174,6 @@ class QMLBridge:
             remote_pdb.RemotePdb("127.0.0.1", 4444).set_trace()
 
 
-    def exit(self) -> None:
-        try:
-            asyncio.run_coroutine_threadsafe(
-                self.backend.terminate_clients(), self._loop,
-            ).result()
-        except Exception as e:  # noqa
-            print(e)
-
-
 # The AppImage AppRun script overwrites some environment path variables to
 # correctly work, and sets RESTORE_<name> equivalents with the original values.
 # If the app is launched from an AppImage, now restore the original values
@@ -188,5 +185,3 @@ for var in ("LD_LIBRARY_PATH", "PYTHONHOME", "PYTHONUSERBASE"):
 
 
 BRIDGE = QMLBridge()
-
-pyotherside.atexit(BRIDGE.exit)
