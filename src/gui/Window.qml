@@ -4,7 +4,7 @@
 import QtQuick
 import QtQuick.Controls
 
-/* import Backend */
+import Backend
 
 /* import "Base" */
 
@@ -16,9 +16,9 @@ ApplicationWindow {
     height: Math.min(screen.height, 768)
     color: "transparent"
 
-    /* Component.onCompleted: { */
-    /*     print(Backend.settings.General.theme) */
-    /* } */
+    Component.onCompleted: {
+        print(`Mirage version: ${Backend.version}`)
+    }
 
     /* HLoader { */
     /*     anchors.fill: parent */

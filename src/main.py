@@ -5,8 +5,10 @@ from pathlib import Path
 from filelock import FileLock, Timeout
 from PySide6.QtCore import QStandardPaths, QUrl
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtQml import QQmlApplicationEngine  # , qmlRegisterSingletonType
+from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterSingletonType
 from PySide6.QtQuickControls2 import QQuickStyle
+
+from .backend.backend import Backend
 
 
 def try_lock() -> FileLock:
@@ -43,7 +45,7 @@ def main():
     engine   = QQmlApplicationEngine()
     qml_file = Path("src/gui/Window.qml")
 
-    # qmlRegisterSingletonType(Backend, "Backend", 1, 0, "Backend")
+    qmlRegisterSingletonType(Backend, "Backend", 1, 0, "Backend")
 
     engine.load(QUrl(str(qml_file)))
 
